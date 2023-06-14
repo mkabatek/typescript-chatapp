@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.io Chat</title>
+</head>
+
+<body>
+    <h1>Socket.io Chat</h1>
+    <form>
+        <input id="username-input" placeholder="Enter a username" autocomplete="off">
+        <button id="connect-button">Connect</button>
+    </form>
+
+    <div id="chat-container" style="display: none;">
+        <ul id="messages"></ul>
+        <form id="message-form">
+            <input id="message-input" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const form = document.querySelector('form');
+        const usernameInput = document.getElementById('username-input');
+        const connectButton = document.getElementById('connect-button');
+        const chatContainer = document.getElementById('chat-container');
+        const messages = document.getElementById('messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+
+        let username = '';
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            username = usernameInput.value;
+            if (username) {
+                connectToServer();
+            }
+        });
+
+        function connectToServer() {
+            form.style.display = 'none';
+            chatContainer.style.display = 'block';
+
+            const socket = io();
+
+            socket.emit('set username', username);
+
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (messageInput.value) {
+                    socket.emit('chat message', messageInput.value);
+                    messageInput.value = '';
+                }
+            });
+
+            socket.on('chat message', (data) => {
+                const li = document.createElement('li');
+                li.textContent = `${data.username}: ${data.message}`;
+                messages.appendChild(li);
+            });
+
+            socket.on('user connected', (username) => {
+                const li = document.createElement('li');
+                li.textContent = `${username} connected`;
+                messages.appendChild(li);
+            });
+
+            socket.on('user disconnected', (username) => {
+                const li = document.createElement('li');
+                li.textContent = `${username} disconnected`;
+                messages.appendChild(li);
+            });
+        }
+    </script>
+</body>
+
+</html>
